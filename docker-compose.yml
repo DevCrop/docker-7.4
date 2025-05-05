@@ -1,0 +1,42 @@
+name: php74-web
+
+version: '3.8'
+
+services:
+  web:
+    image: php74-web:7.4-apache
+    container_name: php74-apache
+    ports:
+      - "8074:80"
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      - db
+      - phpmyadmin
+
+  db:
+    image: mysql:8.0
+    container_name: mysql74
+    restart: always
+    ports:
+      - "3374:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: nineonelabs
+      # MYSQL_USER: root
+      # MYSQL_PASSWORD: password
+    volumes:
+      - db_data_74:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin
+    container_name: phpmyadmin74
+    ports:
+      - "8075:80"
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: root
+
+volumes:
+  db_data_74:
