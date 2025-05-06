@@ -14,8 +14,7 @@ frm.addEventListener('submit', async function (e) {
     });
 
     const data = await res.json();
-
-    if (data.result.success) {
+    if (data.success) {
       alert('파일이 성공적으로 업로드되었습니다.');
       location.reload();
     } else {

@@ -22,34 +22,47 @@ class FileControl
         'wav'
     ];
 
-    public static function uploadFile(string $fileName): array
+    public static function uploadFile(array $fields): array
     {
-        $file = $_FILES[$fileName];
+        $results = [];
 
-        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        foreach ($fields as $field) {
+            if (!isset($_FILES[$field]) || $_FILES[$field]['error'] === UPLOAD_ERR_NO_FILE) {
+                $results[$field] = ['error' => '파일이 전송되지 않았습니다.'];
+                continue;
+            }
 
-        if (!in_array($ext, self::$allowsExtension)) {
-            return ['error' => '허용되지 않은 파일 형식입니다.'];
+            $file = $_FILES[$field];
+            $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+            if (!in_array($ext, self::$allowsExtension)) {
+                $results[$field] = ['error' => '허용되지 않은 파일 형식입니다.'];
+                continue;
+            }
+
+            if (!is_dir(UPLOAD_PATH)) {
+                mkdir(UPLOAD_PATH, 0777, true);
+            }
+
+            $savedName = uniqid() . '_' . basename($file['name']);
+            $targetPath = UPLOAD_PATH . '/' . $savedName;
+
+            if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
+                $results[$field] = ['error' => '파일 저장에 실패했습니다.'];
+                continue;
+            }
+
+            $results[$field] = [
+                'success'  => true,
+                'filename' => $savedName,
+                'original' => $file['name'],
+                'file_path' => $targetPath
+            ];
         }
-
-        if (!is_dir(UPLOAD_PATH)) {
-            mkdir(UPLOAD_PATH, 0777, true);
-        }
-
-        $savedName = uniqid() . '_' . basename($file['name']);
-        $targetPath = UPLOAD_PATH . '/' . $savedName;
-
-        if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
-            return ['error' => '파일 저장에 실패했습니다.'];
-        }
-
-        return [
-            'success' => true,
-            'filename' => $savedName,
-            'original' => $file['name'],
-            'upload_path' => UPLOAD_PATH,
-        ];
+        return $results;
     }
+
+
 
     public static function deleteFile(string $filename): bool
     {
